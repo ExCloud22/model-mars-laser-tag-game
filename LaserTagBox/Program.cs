@@ -22,8 +22,8 @@ internal static class Program
         description.AddAgent<PlayerBody, PlayerBodyLayer>();
 
         // USER: Add agents here
-        description.AddAgent<YourPlayerMindPleaseRename, PlayerMindLayer>();
-        description.AddAgent<YourPlayerMindPleaseRenameCopy, PlayerMindLayer>();
+        description.AddAgent<YourPlayerMindRuleBased, PlayerMindLayer>();
+        description.AddAgent<YourPlayerMindLearningBased, PlayerMindLayer>();
 
         // USER: Specify JSON configuration file here
         var file = File.ReadAllText("config_4.json");

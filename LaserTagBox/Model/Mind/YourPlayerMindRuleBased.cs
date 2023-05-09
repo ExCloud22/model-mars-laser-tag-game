@@ -1,13 +1,22 @@
+using System.Collections.Generic;
 using System.Linq;
+using LaserTagBox.Model.Body;
+using LaserTagBox.Model.Shared;
+using LaserTagBox.Model.Spots;
 using Mars.Common.Core.Random;
 using Mars.Interfaces.Environments;
 
 namespace LaserTagBox.Model.Mind;
 
-public class YourPlayerMindPleaseRename : AbstractPlayerMind
+public class YourPlayerMindRuleBased : AbstractPlayerMind
 {
     private PlayerMindLayer _mindLayer;
     private Position _goal;
+    private List<Position> hills;
+    private List<EnemySnapshot> enemy;
+    private List<Position> ditches;
+    private List<Position> barriers;
+    private List<IPlayerBody> teammates;
 
     public override void Init(PlayerMindLayer mindLayer)
     {
@@ -16,10 +25,27 @@ public class YourPlayerMindPleaseRename : AbstractPlayerMind
 
     public override void Tick()
     {
-        if (Body.ActionPoints < 10)
+        while (Body.ActionPoints >= 0)
         {
-            return;  //TODO execution order fix
+            enemy = Body.ExploreEnemies1();
+            if (enemy.Count == 0)
+            {
+                hills = Body.ExploreHills1();
+                if (hills.Count > 0)
+                {
+                    
+                }
+            }
+            else
+            {
+                
+            }
         }
+        /*if (Body.ActionPoints < 10)
+        {
+            
+            return;  //TODO execution order fix
+        }*/
         var enemies = Body.ExploreEnemies1();
         if (enemies.Any())
         {
