@@ -11,6 +11,8 @@ public interface IPlayerBody : IPositionable
 {   
     //******************** costly ********************
 
+    int MemberID();
+    
     /// <summary>
     ///     Explores all <code>Barrier</code>s in sight of the agent. Costs 1 action point.
     /// </summary>
@@ -140,4 +142,6 @@ public interface IPlayerBody : IPositionable
     ///     Indicates if the agent is alive and can therefore act.
     /// </summary>
     bool Alive { get; }
+
+    
 }

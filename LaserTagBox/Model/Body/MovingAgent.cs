@@ -756,6 +756,11 @@ public abstract class MovingAgent : IAgent<PlayerBodyLayer>, IPositionable
         HasMoved = true;
     }
 
+    public int getMemberID()
+    {
+        return _memberId;
+    }
+
     protected abstract void InsertIntoEnv();
     protected abstract Position MoveToPosition(Position position);
 }

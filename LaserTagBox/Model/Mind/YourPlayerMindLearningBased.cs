@@ -1,6 +1,6 @@
 namespace LaserTagBox.Model.Mind;
 
-public class YourPlayerMindLearningBased : YourPlayerMindRuleBased
+public class RoleMindLearningBased : RoleMindRuleBased
 {
        
 }
