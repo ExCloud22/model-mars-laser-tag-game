@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using LaserTagBox.Model.Body;
@@ -94,6 +95,10 @@ public class RoleMindRuleBased : AbstractPlayerMind
         {
             //Do Nothing, just wait for command from Scouter
         }
+
+        _goForwardShooter = false;
+        bool successRateForShooting = CheckSuccessRateForShooting(_enemy);
+        
     }
     
     private void DoAggresiveStrategyForScouter()
@@ -105,8 +110,8 @@ public class RoleMindRuleBased : AbstractPlayerMind
             enemies = Body.ExploreEnemies1();
             if (enemies.Count > 0)
             {
-                var enemy = enemies.First();
-                var positionEnemy = enemy.Position;
+                _enemy = enemies.First();
+                _enemyPosition = _enemy.Position;
             }
         }
     }
@@ -144,12 +149,22 @@ public class RoleMindRuleBased : AbstractPlayerMind
     {
         _goForwardAssister = true;
     }
+
+    /**
+     * True if the enemy not lying
+     */
+    private bool CheckSuccessRateForShooting(EnemySnapshot enemy)
+    {
+        return enemy.Stance != Stance.Lying ? true : false;
+    }
     
     
     #endregion
     
     private PlayerMindLayer _mindLayer;
     private Position _goal;
+    private Position _enemyPosition;
+    private EnemySnapshot _enemy;
     private List<Position> hills;
     private List<EnemySnapshot> enemies;
     private List<Position> ditches;
