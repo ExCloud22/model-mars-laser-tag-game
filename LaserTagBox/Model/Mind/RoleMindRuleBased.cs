@@ -91,9 +91,10 @@ public class RoleMindRuleBased : AbstractPlayerMind
     
     private void DoAggresiveStrategyForShooter()
     {
-        while (!_goForwardShooter)
+        if (!_goForwardShooter)
         {
             //Do Nothing, just wait for command from Scouter
+            return;
         }
 
         _goForwardShooter = false;
@@ -127,9 +128,10 @@ public class RoleMindRuleBased : AbstractPlayerMind
     
     private void DoAggresiveStrategyForAssister()
     {
-        while (!_goForwardAssister)
+        if (!_goForwardAssister)
         {
             //Do Nothing, just wait for command from Scouter
+            return;
         }
         _goForwardAssister = false;
         bool successRateForShooting = CheckSuccessRateForShooting(_enemy);
