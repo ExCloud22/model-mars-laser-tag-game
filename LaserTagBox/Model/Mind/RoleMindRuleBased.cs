@@ -98,7 +98,16 @@ public class RoleMindRuleBased : AbstractPlayerMind
 
         _goForwardShooter = false;
         bool successRateForShooting = CheckSuccessRateForShooting(_enemy);
-        
+        if (Body.GetDistance(_enemyPosition) <= 5)
+        {
+            Body.ChangeStance2(Stance.Lying);
+            if (Body.RemainingShots == 0)
+            {
+                Body.Reload3();
+                
+            }
+            Body.Tag5(_enemyPosition);
+        }
     }
     
     private void DoAggresiveStrategyForScouter()
@@ -122,8 +131,17 @@ public class RoleMindRuleBased : AbstractPlayerMind
         {
             //Do Nothing, just wait for command from Scouter
         }
+        _goForwardAssister = false;
+        bool successRateForShooting = CheckSuccessRateForShooting(_enemy);
+        if (Body.GetDistance(_enemyPosition) <= 5)
         {
-            
+            Body.ChangeStance2(Stance.Lying);
+            if (Body.RemainingShots == 0)
+            {
+                Body.Reload3();
+                
+            }
+            Body.Tag5(_enemyPosition);
         }
     }
     
