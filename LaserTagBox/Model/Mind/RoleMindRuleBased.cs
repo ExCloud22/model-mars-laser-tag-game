@@ -51,39 +51,9 @@ public class RoleMindRuleBased : AbstractPlayerMind
         }
         else
         {
-            switch (role)
-            {
-                case Role.Shooter:
-                    DoDefensiveStrategyForShooter(); break;
-                case Role.Scouter:
-                    DoDefensiveStrategyForScouter(); break;
-                case Role.Assister:
-                    DoDefensiveStrategyForAssister(); break;
-            }
+            DoDefensiveStrategy();
         }
-        /*if (Body.ActionPoints < 10)
-        {
-            
-            return;  //TODO execution order fix
-        }*/
-        var enemies = Body.ExploreEnemies1();
-        if (enemies.Any())
-        {
-            _goal = enemies.First().Position.Copy();
-            if (Body.RemainingShots == 0) Body.Reload3();
-            Body.Tag5(enemies.First().Position);
-        }
-            
-        if (_goal == null || Body.GetDistance(_goal) == 1)
-        {
-            var newX = RandomHelper.Random.Next(_mindLayer.Width);
-            var newY = RandomHelper.Random.Next(_mindLayer.Height);
-            _goal = Position.CreatePosition(newX, newY);
-        }
-
-        var moved = Body.GoTo(_goal);
-        if (!moved) _goal = null;
-
+        
     }
     #endregion
     
@@ -93,36 +63,53 @@ public class RoleMindRuleBased : AbstractPlayerMind
     {
         if (!_goForwardShooter)
         {
-            //Do Nothing, just wait for command from Scouter
+            RandomMove();
+            _shooterPosition = Body.Position;
             return;
         }
 
         _goForwardShooter = false;
-        bool successRateForShooting = CheckSuccessRateForShooting(_enemy);
-        if (Body.GetDistance(_enemyPosition) <= 5)
+        if (!GoForShot())
         {
-            Body.ChangeStance2(Stance.Lying);
-            if (Body.RemainingShots == 0)
-            {
-                Body.Reload3();
-                
-            }
-            Body.Tag5(_enemyPosition);
+            RandomMove();
         }
     }
     
     private void DoAggresiveStrategyForScouter()
     {
-        hills = Body.ExploreHills1();
+        var hills = Body.ExploreHills1();
         if (hills.Count > 0)
         {
             Body.GoTo(hills.OrderBy(x => Body.GetDistance(x)).FirstOrDefault());
             enemies = Body.ExploreEnemies1();
-            if (enemies.Count > 0)
+            if (enemies.Any())
             {
                 _enemy = enemies.First();
-                _enemyPosition = _enemy.Position;
+                _enemyPosition = _enemy.Position.Copy();
+                TellAssister();
+                TellShooter();
+                bool successRateForShooting = CheckSuccessRateForShooting(_enemy);
+                if (Body.GetDistance(_enemyPosition) <= 5 && successRateForShooting)
+                {
+                    if (Body.Stance != Stance.Lying)
+                    {
+                        Body.ChangeStance2(Stance.Lying);
+                    }
+                    
+                    if (Body.RemainingShots == 0)
+                    {
+                        Body.Reload3();
+                
+                    }
+
+                    Body.Tag5(_enemyPosition);
+                    MoveAgentAfterShooting();
+                }
             }
+        }
+        else
+        {
+            RandomMove();
         }
     }
     
@@ -130,33 +117,34 @@ public class RoleMindRuleBased : AbstractPlayerMind
     {
         if (!_goForwardAssister)
         {
-            //Do Nothing, just wait for command from Scouter
+            Body.GoTo(_shooterPosition);
             return;
         }
         _goForwardAssister = false;
-        bool successRateForShooting = CheckSuccessRateForShooting(_enemy);
-        if (Body.GetDistance(_enemyPosition) <= 5)
+        if (!GoForShot())
         {
-            Body.ChangeStance2(Stance.Lying);
-            if (Body.RemainingShots == 0)
-            {
-                Body.Reload3();
-                
-            }
-            Body.Tag5(_enemyPosition);
+            RandomMove();
         }
     }
     
-    private void DoDefensiveStrategyForShooter()
+    private void DoDefensiveStrategy()
     {
-        
-    }
-    private void DoDefensiveStrategyForScouter()
-    {
-        
-    }
-    private void DoDefensiveStrategyForAssister()
-    {
+        var exploreBarriers1 = Body.ExploreBarriers1(); 
+        var exploreDitches1 = Body.ExploreDitches1();
+        if (exploreBarriers1 != null && exploreBarriers1.Any())
+        {
+            Body.GoTo(exploreBarriers1[0]);
+            GoForShot();
+        }
+        else if (exploreDitches1 != null && exploreDitches1.Any())
+        {
+            Body.GoTo(exploreDitches1[0]);
+            GoForShot();
+        }
+        else
+        {
+            RandomMove();
+        }
         
     }
 
@@ -175,20 +163,63 @@ public class RoleMindRuleBased : AbstractPlayerMind
      */
     private bool CheckSuccessRateForShooting(EnemySnapshot enemy)
     {
-        return enemy.Stance != Stance.Lying ? true : false;
+        return enemy.Stance != Stance.Lying;
     }
     
+    private void MoveAgentAfterShooting()
+    {
+        var tmpPos = Position.CreatePosition(Body.Position.X + 1, Body.Position.Y);
+        Body.GoTo(tmpPos);
+    }
+    
+    private void RandomMove()
+    {
+        var x = RandomHelper.Random.Next(48);
+        var y = RandomHelper.Random.Next(48);
+
+        var goal = Position.CreatePosition(x, y);
+        Body.GoTo(goal);
+    }
+    
+    private bool GoForShot()
+    {
+        enemies = Body.ExploreEnemies1();
+        if (enemies.Any())
+        {
+            _enemy = enemies.First();
+            _enemyPosition = _enemy.Position.Copy();
+            bool successRateForShooting = CheckSuccessRateForShooting(_enemy);
+            if (Body.GetDistance(_enemyPosition) <= 5 && successRateForShooting)
+            {
+                if (Body.Stance != Stance.Lying)
+                {
+                    Body.ChangeStance2(Stance.Lying);
+                }
+
+                if (Body.RemainingShots == 0)
+                {
+                    Body.Reload3();
+
+                }
+
+                Body.Tag5(_enemyPosition);
+                MoveAgentAfterShooting();
+            }
+
+            return true;
+        }
+
+        return false;
+    }
     
     #endregion
     
     private PlayerMindLayer _mindLayer;
     private Position _goal;
     private Position _enemyPosition;
+    private Position _shooterPosition;
     private EnemySnapshot _enemy;
-    private List<Position> hills;
     private List<EnemySnapshot> enemies;
-    private List<Position> ditches;
-    private List<Position> barriers;
     private List<PlayerBody> teammates;
     private Role role;
     private bool _goForwardShooter = false;
