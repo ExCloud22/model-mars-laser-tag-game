@@ -6,6 +6,7 @@ using LaserTagBox.Model.Shared;
 using LaserTagBox.Model.Spots;
 using Mars.Common.Core.Random;
 using Mars.Interfaces.Environments;
+using ServiceStack;
 
 namespace LaserTagBox.Model.Mind;
 
@@ -24,11 +25,25 @@ public class RoleMindRuleBased : AbstractPlayerMind
     public override void Init(PlayerMindLayer mindLayer)
     {
         _mindLayer = mindLayer;
-        switch (Body.MemberID())
+
+        /*switch (_totalPlayer++)
         {
             case 0 : role = Role.Shooter; break;
             case 1 : role = Role.Scouter; break;
             case 2 : role = Role.Assister; break;
+        }*/
+        if (_shooter == Guid.Empty)
+        {
+            _shooter = this.ID;
+            role = Role.Shooter;
+        } else if (_assister == Guid.Empty)
+        {
+            _assister = this.ID;
+            role = Role.Assister;
+        } else if (_scouter == Guid.Empty)
+        {
+            _scouter = this.ID;
+            role = Role.Scouter;
         }
     }
     #endregion
@@ -216,6 +231,9 @@ public class RoleMindRuleBased : AbstractPlayerMind
     
     private PlayerMindLayer _mindLayer;
     private Position _goal;
+    private Guid _shooter;
+    private Guid _assister;
+    private Guid _scouter;
     private Position _enemyPosition;
     private Position _shooterPosition;
     private EnemySnapshot _enemy;

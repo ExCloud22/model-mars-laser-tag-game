@@ -11,8 +11,6 @@ public interface IPlayerBody : IPositionable
 {   
     //******************** costly ********************
 
-    int MemberID();
-    
     /// <summary>
     ///     Explores all <code>Barrier</code>s in sight of the agent. Costs 1 action point.
     /// </summary>
