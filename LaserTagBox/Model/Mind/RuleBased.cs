@@ -82,113 +82,154 @@ public class RuleBased : AbstractPlayerMind
     #endregion
     
     #region Methods
-    
+
     private void DoAggresiveStrategyForShooter()
     {
+        _shooterPosition = Body.Position;
         enemies = Body.ExploreEnemies1();
-        
-        if (!_aiOnTheHills)
+        if (enemies.Any())
         {
-            var hills = Body.ExploreHills1();
-            if (hills.Count > 0)
+            if (Body.Stance != Stance.Standing)
             {
-                Body.GoTo(hills.OrderBy(x => Body.GetDistance(x)).FirstOrDefault());
-                if (Body.GetDistance(hills.OrderBy(x => Body.GetDistance(x)).FirstOrDefault()) == 0)
-                {
-                    _aiOnTheHills = true;
-                    _tickOnTheHills = 0;
-                    if (Body.Stance != Stance.Kneeling)
-                    {
-                        Body.ChangeStance2(Stance.Kneeling);
-                    }
-                }
-                
-                ActionOnTheHills();
-            } else
-            {
-                RandomMove();
+                Body.ChangeStance2(Stance.Standing);
             }
+            GoForShot();
         }
+        
+
         else
         {
-            ActionOnTheHills();
-            _tickOnTheHills++;
-
-            if (_tickOnTheHills == 7 || Body.WasTaggedLastTick)
+            var exploreBarriers1 = Body.ExploreBarriers1();
+            var exploreDitches1 = Body.ExploreDitches1();
+            var hills = Body.ExploreHills1();
+            if (exploreBarriers1 != null && exploreBarriers1.Any())
+            {
+                Body.GoTo(exploreBarriers1[0]);
+                _shooterPosition = Body.Position;
+                GoForShot();
+                
+            }
+            else if (exploreDitches1 != null && exploreDitches1.Any())
+            {
+                Body.GoTo(exploreDitches1[0]);
+                _shooterPosition = Body.Position;
+                GoForShot();
+            }
+            else if (hills != null && hills.Any())
+            {
+                Body.GoTo(hills[0]);
+                _shooterPosition = Body.Position;
+                GoForShot();
+            }
+            else
             {
                 RandomMove();
-                _aiOnTheHills = false;
             }
         }
     }
-    
+
     private void DoAggresiveStrategyForScouter()
     {
-        if (!_aiOnTheHills)
+        Body.GoTo(_shooterPosition);
+        
+        if (enemies.Any())
         {
-            var hills = Body.ExploreHills1();
-            if (hills.Count > 0)
+            if (Body.Stance != Stance.Kneeling)
             {
-                Body.GoTo(hills.OrderBy(x => Body.GetDistance(x)).FirstOrDefault());
-                if (Body.GetDistance(hills.OrderBy(x => Body.GetDistance(x)).FirstOrDefault()) == 0)
-                {
-                    _aiOnTheHills = true;
-                    _tickOnTheHills = 0;
-                    if (Body.Stance != Stance.Kneeling)
-                    {
-                        Body.ChangeStance2(Stance.Kneeling);
-                    }
-
-                }
-                
-                ActionOnTheHills();
-            } else
-            {
-                RandomMove();
+                Body.ChangeStance2(Stance.Kneeling);
             }
+            GoForShot();
+        }
+        
+        var exploreBarriers1 = Body.ExploreBarriers1();
+        var exploreDitches1 = Body.ExploreDitches1();
+        var hills = Body.ExploreHills1();
+        
+        if (exploreBarriers1 != null && exploreBarriers1.Any())
+        {
+            Body.GoTo(exploreBarriers1[0]);
+            if (Body.Stance != Stance.Kneeling)
+            {
+                Body.ChangeStance2(Stance.Kneeling);
+            }
+            GoForShot();
+        }
+        else if (exploreDitches1 != null && exploreDitches1.Any())
+        {
+            Body.GoTo(exploreDitches1[0]);
+            if (Body.Stance != Stance.Kneeling)
+            {
+                Body.ChangeStance2(Stance.Kneeling);
+            }
+            GoForShot();
+        }
+        else if (hills != null && hills.Any())
+        {
+            Body.GoTo(hills[0]);
+            if (Body.Stance != Stance.Kneeling)
+            {
+                Body.ChangeStance2(Stance.Kneeling);
+            }
+            GoForShot();
         }
         else
         {
-            ActionOnTheHills();
-            _tickOnTheHills++;
-
-            if (_tickOnTheHills == 7 || Body.WasTaggedLastTick)
-            {
-                RandomMove();
-                _aiOnTheHills = false;
-            }
+            RandomMove();
         }
+        
         
         
     }
     
     private void DoAggresiveStrategyForAssister()
     {
-        if (!_isScouterDead && !_isShooterDead && !_isScouterLow && !_isShooterLow)
+        Body.GoTo(_shooterPosition);
+        
+        if (enemies.Any())
         {
-            if (!_goForwardAssister)
+            if (Body.Stance != Stance.Lying)
             {
-                Body.GoTo(_shooterPosition);
-                return;
+                Body.ChangeStance2(Stance.Lying);
             }
-            _goForwardAssister = false;
-            if (!GoForShot())
-            {
-                RandomMove();
-            }
-        } else if (_isScouterDead || _isScouterLow)
+            GoForShot();
+        }
+        
+        var exploreBarriers1 = Body.ExploreBarriers1();
+        var exploreDitches1 = Body.ExploreDitches1();
+        var hills = Body.ExploreHills1();
+        
+        if (exploreBarriers1 != null && exploreBarriers1.Any())
         {
-
-            DoAggresiveStrategyForScouter();
-        } else if (_isShooterDead || _isShooterLow) 
+            Body.GoTo(exploreBarriers1[0]);
+            if (Body.Stance != Stance.Lying)
+            {
+                Body.ChangeStance2(Stance.Lying);
+            }
+            GoForShot();
+        }
+        else if (exploreDitches1 != null && exploreDitches1.Any())
+        {
+            Body.GoTo(exploreDitches1[0]);
+            if (Body.Stance != Stance.Lying)
+            {
+                Body.ChangeStance2(Stance.Lying);
+            }
+            GoForShot();
+        }
+        else if (hills != null && hills.Any())
+        {
+            Body.GoTo(hills[0]);
+            if (Body.Stance != Stance.Lying)
+            {
+                Body.ChangeStance2(Stance.Lying);
+            }
+            GoForShot();
+        }
+        else
         {
             RandomMove();
-            
-            if (!GoForShot())
-            {
-                RandomMove();
-            }
         }
+
         
     }
     
@@ -235,41 +276,7 @@ public class RuleBased : AbstractPlayerMind
         }
         
     }
-
-    private void TellShooter()
-    {
-        _goForwardShooter = true;
-    }
     
-    private void TellAssister()
-    {
-        _goForwardAssister = true;
-    }
-
-    private void ActionOnTheHills()
-    {
-        enemies = Body.ExploreEnemies1();
-        if (enemies.Any())
-        {
-            _enemy = enemies.First();
-            _enemyPosition = _enemy.Position.Copy();
-            TellAssister();
-            TellShooter();
-            bool successRateForShooting = CheckSuccessRateForShooting(_enemy);
-            if (Body.GetDistance(_enemyPosition) <= 5 && successRateForShooting)
-            {
-                   
-                if (Body.RemainingShots == 0)
-                {
-                    Body.Reload3();
-                
-                }
-
-                Body.Tag5(_enemyPosition);
-                MoveAgentAfterShooting();
-            }
-        }
-    }
     /**
      * True if the enemy not lying
      */
@@ -304,10 +311,6 @@ public class RuleBased : AbstractPlayerMind
             bool successRateForShooting = CheckSuccessRateForShooting(_enemy);
             if (Body.GetDistance(_enemyPosition) <= 5 && successRateForShooting)
             {
-                if (Body.Stance != Stance.Lying)
-                {
-                    Body.ChangeStance2(Stance.Lying);
-                }
 
                 if (Body.RemainingShots == 0)
                 {
