@@ -78,6 +78,8 @@ public class PlayerBody : MovingAgent, IPlayerBody
     /// <exception cref="InvalidOperationException">Thrown if this method is called manually</exception>
     public override void Tick()
     {
+        base.Tick();
+        
         if (!Alive) return;
         if (_currentTick == Battleground.GetCurrentTick())
             throw new InvalidOperationException("Don't call the Tick method, it's done by the system.");
@@ -91,19 +93,19 @@ public class PlayerBody : MovingAgent, IPlayerBody
     /// <summary>
     ///     Explores the hills in the agent's field of vision.
     /// </summary>
-    /// <returns>A list of Hill objects</returns>
+    /// <returns>A list of Hill objects or null if the caller does not have enough ActionPoints</returns>
     public List<Position> ExploreHills1() => ExploreSpots(typeof(Hill));
 
     /// <summary>
     ///     Explores the barriers in the agent's field of vision.
     /// </summary>
-    /// <returns>A list of Barrier objects</returns>
+    /// <returns>A list of Barrier objects or null if the caller does not have enough ActionPoints</returns>
     public List<Position> ExploreBarriers1() => ExploreSpots(typeof(Barrier));
 
     /// <summary>
     ///     Explores the ditches in the agent's field of vision.
     /// </summary>
-    /// <returns>A list of Ditch objects</returns>
+    /// <returns>A list of Ditch objects or null if the caller does not have enough ActionPoints</returns>
     public List<Position> ExploreDitches1() => ExploreSpots(typeof(Ditch));
         
     /// <summary>
@@ -121,7 +123,7 @@ public class PlayerBody : MovingAgent, IPlayerBody
     /// <summary>
     ///     Explores enemy agents in the agent's field of vision.
     /// </summary>
-    /// <returns>A list of EnemySnapshot objects</returns>
+    /// <returns>A list of EnemySnapshot objects or null if the caller does not have enough ActionPoints</returns>
     public List<EnemySnapshot> ExploreEnemies1()
     {
         if (ActionPoints < 1) return null;
@@ -137,7 +139,8 @@ public class PlayerBody : MovingAgent, IPlayerBody
     ///     Determines whether there exists a direct line of sight between the caller and the given position
     /// </summary>
     /// <param name="other">The position whose line of sight relative to the caller is to be determined</param>
-    /// <returns>boolean</returns>
+    /// <returns>true if there exists an open line of sight between the caller's position and the given position.
+    /// false if no such line of sight exists or if the caller does not have enough ActionPoints.</returns>
     public bool HasBeeline1(Position other)
     {
         if (ActionPoints < 1) return false;
@@ -163,7 +166,7 @@ public class PlayerBody : MovingAgent, IPlayerBody
     ///     Shoots at the given Position. Returns true if shot was successfully executed, otherwise false.
     /// </summary>
     /// <param name="aimedPosition">The position to be shot at</param>
-    /// <returns>boolean</returns>
+    /// <returns>true if an enemy on the given position was tagged, false otherwise</returns>
     /// <exception cref="ArgumentOutOfRangeException">Thrown if a player has an invalid Stance</exception>
     public bool Tag5(Position aimedPosition)
     {
@@ -235,7 +238,7 @@ public class PlayerBody : MovingAgent, IPlayerBody
     ///     Generic exploration method for exploring points of interest (POIs) in the environment.
     /// </summary>
     /// <param name="type">The type of POI to be explored</param>
-    /// <returns>A list of POIs of the requested type</returns>
+    /// <returns>A list of POIs of the requested type or null if the caller does not have enough ActionPoints</returns>
     private List<Position> ExploreSpots(Type type)
     {
         if (ActionPoints < 1) return null;
@@ -281,7 +284,7 @@ public class PlayerBody : MovingAgent, IPlayerBody
     /// </summary>
     /// <param name="enemy">The PlayerBody whose visibility relative to the caller is to be determined</param>
     /// <returns>boolean</returns>
-    private bool IsVisible(PlayerBody enemy) => enemy.VisibilityRange >= GetDistance(enemy.Position);
+    private bool IsVisible(PlayerBody enemy) => Battleground.GetIntValue(Position) is 2 or 3 || enemy.VisibilityRange >= GetDistance(enemy.Position);
         
     /// <summary>
     ///     Moves the agent to the given position.
