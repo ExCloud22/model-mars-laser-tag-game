@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using LaserTagBox.Model.Body;
@@ -7,12 +7,10 @@ using LaserTagBox.Model.Spots;
 using Mars.Common.Core.Random;
 using Mars.Interfaces.Environments;
 using ServiceStack;
-
 namespace LaserTagBox.Model.Mind;
 
-public class RoleMindRuleBased : AbstractPlayerMind
+public class RuleBased : AbstractPlayerMind
 {
-    
     private enum Role
     {
         Shooter,
@@ -87,31 +85,41 @@ public class RoleMindRuleBased : AbstractPlayerMind
     
     private void DoAggresiveStrategyForShooter()
     {
-        if (!_isScouterDead && !_isScouterLow)
+        enemies = Body.ExploreEnemies1();
+        
+        if (!_aiOnTheHills)
         {
-            if (!_goForwardShooter)
+            var hills = Body.ExploreHills1();
+            if (hills.Count > 0)
             {
-                RandomMove();
-                _shooterPosition = Body.Position;
-                return;
-            }
-
-            _goForwardShooter = false;
-            if (!GoForShot())
+                Body.GoTo(hills.OrderBy(x => Body.GetDistance(x)).FirstOrDefault());
+                if (Body.GetDistance(hills.OrderBy(x => Body.GetDistance(x)).FirstOrDefault()) == 0)
+                {
+                    _aiOnTheHills = true;
+                    _tickOnTheHills = 0;
+                    if (Body.Stance != Stance.Kneeling)
+                    {
+                        Body.ChangeStance2(Stance.Kneeling);
+                    }
+                }
+                
+                ActionOnTheHills();
+            } else
             {
                 RandomMove();
             }
         }
         else
         {
-            RandomMove();
-            
-            if (!GoForShot())
+            ActionOnTheHills();
+            _tickOnTheHills++;
+
+            if (_tickOnTheHills == 7 || Body.WasTaggedLastTick)
             {
                 RandomMove();
+                _aiOnTheHills = false;
             }
         }
-        
     }
     
     private void DoAggresiveStrategyForScouter()
@@ -126,6 +134,11 @@ public class RoleMindRuleBased : AbstractPlayerMind
                 {
                     _aiOnTheHills = true;
                     _tickOnTheHills = 0;
+                    if (Body.Stance != Stance.Kneeling)
+                    {
+                        Body.ChangeStance2(Stance.Kneeling);
+                    }
+
                 }
                 
                 ActionOnTheHills();
@@ -245,11 +258,7 @@ public class RoleMindRuleBased : AbstractPlayerMind
             bool successRateForShooting = CheckSuccessRateForShooting(_enemy);
             if (Body.GetDistance(_enemyPosition) <= 5 && successRateForShooting)
             {
-                if (Body.Stance != Stance.Lying)
-                {
-                    Body.ChangeStance2(Stance.Lying);
-                }
-                    
+                   
                 if (Body.RemainingShots == 0)
                 {
                     Body.Reload3();

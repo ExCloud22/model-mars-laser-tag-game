@@ -23,12 +23,13 @@ internal static class Program
         description.AddAgent<PlayerBody, PlayerBodyLayer>();
 
         // USER: Add agents here
-        description.AddAgent<RoleMindRuleBased, PlayerMindLayer>();
+        
         //description.AddAgent<Example1, PlayerMindLayer>();
         //description.AddAgent<Example2, PlayerMindLayer>();
         description.AddAgent<Example1, PlayerMindLayer>();
-        description.AddAgent<Example2, PlayerMindLayer>();
-
+        description.AddAgent<RoleMindRuleBased, PlayerMindLayer>();
+        description.AddAgent<Example3, PlayerMindLayer>();
+        
         // USER: Specify JSON configuration file here
         var file = File.ReadAllText("config_3.json");
         var config = SimulationConfig.Deserialize(file);
