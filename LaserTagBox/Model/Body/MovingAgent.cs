@@ -6,6 +6,7 @@ using LaserTagBox.Model.Spots;
 using Mars.Interfaces.Agents;
 using Mars.Interfaces.Annotations;
 using Mars.Interfaces.Environments;
+using MongoDB.Driver.Core.Connections;
 
 namespace LaserTagBox.Model.Body;
 
@@ -766,7 +767,7 @@ public abstract class MovingAgent : IAgent<PlayerBodyLayer>, IPositionable
     {
         return _memberId;
     }
-
+    
     protected abstract void InsertIntoEnv();
     protected abstract Position MoveToPosition(Position position);
 }

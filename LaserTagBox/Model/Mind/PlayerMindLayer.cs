@@ -89,7 +89,6 @@ public class PlayerMindLayer : ILayer
                 agent.Init(this);
             }
         }
-
         return true;
     }
     #endregion

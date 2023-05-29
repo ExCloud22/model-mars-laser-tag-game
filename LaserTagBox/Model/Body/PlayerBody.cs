@@ -25,12 +25,7 @@ public class PlayerBody : MovingAgent, IPlayerBody
     ///     Represents the agent's vital state.
     /// </summary>
     public bool Alive { get; private set; } = true;
-
-    public int MemberID()
-    {
-        return MemberId;
-    }
-
+    
     /// <summary>
     ///     Points that can be spent on actions per tick.
     /// </summary>

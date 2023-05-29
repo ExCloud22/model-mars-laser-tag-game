@@ -59,9 +59,7 @@ public class RuleBased : AbstractPlayerMind
                     DoAggresiveStrategyForScouter(); break;
                 case Role.Assister:
                     DoAggresiveStrategyForAssister(); break;
-                    
             }
-
         }
         else
         {

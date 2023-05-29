@@ -16,19 +16,22 @@ internal static class Program
         var description = new ModelDescription();
         description.AddLayer<PlayerMindLayer>();
         description.AddLayer<PlayerBodyLayer>();
-
+        
+        //Hill, Ditch und Barrier sind Entities. 
         description.AddAgent<Hill, PlayerBodyLayer>();
         description.AddAgent<Ditch, PlayerBodyLayer>();
         description.AddAgent<Barrier, PlayerBodyLayer>();
         description.AddAgent<PlayerBody, PlayerBodyLayer>();
-
-        // USER: Add agents here
         
         //description.AddAgent<Example1, PlayerMindLayer>();
         //description.AddAgent<Example2, PlayerMindLayer>();
         description.AddAgent<Example1, PlayerMindLayer>();
-        description.AddAgent<RoleMindRuleBased, PlayerMindLayer>();
-        description.AddAgent<Example3, PlayerMindLayer>();
+        
+        // USER: Add agents here
+        //description.AddAgent<LearningBasedMind, PlayerMindLayer>();
+        description.AddAgent<RuleBasedMind, PlayerMindLayer>();
+
+        description.AddAgent<Example2, PlayerMindLayer>();
         
         // USER: Specify JSON configuration file here
         var file = File.ReadAllText("config_3.json");
