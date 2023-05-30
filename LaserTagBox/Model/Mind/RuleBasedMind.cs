@@ -11,35 +11,25 @@ namespace LaserTagBox.Model.Mind;
 public class RuleBasedMind : AbstractPlayerMind
 {
     #region Fields
-    //diese Fields werden nicht benutzt
-    //private Position _goal;
-    //private List<PlayerBody> teammates;
-    //private bool _isAssistantDead = false;
-    //private bool _isAssistantLow = false;
 
     private PlayerMindLayer _mindLayer;
-    //Die unique IDs der einzelnen Agenten-Rollen
-    private Guid _shooter;
-    private Guid _assistant;
-    private Guid _scouter;
+    private static Guid _shooter;
+    private static Guid _assistant;
+    private static Guid _scouter;
     private Position _enemyPosition;
-    private Position _shooterPosition;
-    //Hier drinn werden alle Informationen über einen enemy gespeichert
     private EnemySnapshot _enemy;
-    //Hier drinn werden alle Informationen über eine Menge an enemys gespeichert
     private List<EnemySnapshot> _enemies;
-    //Die Rolle des Agents, also Shooter, Scouter oder Assistant
     private Role _role;
-    private bool _goForwardShooter = false;
-    private bool _goForwardAssistant = false;
     private bool _isScouterDead = false;
     private bool _isShooterDead = false;
     private bool _isScouterLow = false;
     private bool _isShooterLow = false;
     //Tracked ob irgendein Agent aus dem eigenen Team auf einem hill befindet
-    private bool _aiOnTheHills = false;
+    private bool _isScouterOnHill = false;
+    private bool _isScouterBeforeOnHill = false;
     //Zählt wie oft sich pro Tick in einer Simulation ein Agent aus dem eigenen Team auf einem hill befindet 
-    private int _tickOnTheHills;
+    private int _tickOnTheHill;
+    private int _tickAfterOnTheHill;
    #endregion
     
     
@@ -63,15 +53,18 @@ public class RuleBasedMind : AbstractPlayerMind
         _mindLayer = mindLayer;
         if (_shooter == Guid.Empty)
         {
-            _shooter = ID;
+            //Console.WriteLine("Shooter init");
+            _shooter = this.ID;
             _role = Role.Shooter;
         } else if (_assistant == Guid.Empty)
         {
-            _assistant = ID;
+            //Console.WriteLine("Assistant init");
+            _assistant = this.ID;
             _role = Role.Assistant;
         } else if (_scouter == Guid.Empty)
         {
-            _scouter = ID;
+            //Console.WriteLine("Scouter init");
+            _scouter = this.ID;
             _role = Role.Scouter;
         }
     }
@@ -80,17 +73,27 @@ public class RuleBasedMind : AbstractPlayerMind
     #region tick
     public override void Tick()
     {
-        //wenn die Energy von dem Agent >= 30 ist, soll je nach Role des Agents eine aggressive Strategie verfolgt werden
-        if (Body.Energy >= 30)
+        if (_mindLayer.GetCurrentTick() < 50)
+        {
+            if (!GoForShot())
+            {
+                RandomMove();
+            }
+        }else if (Body.Energy >= 20)
         {
             switch (_role)
             {
                 case Role.Shooter:
-                    DoAggressiveStrategyForShooter(); break;
+                    _isShooterLow = false;
+                    DoAggressiveStrategyForShooter(); 
+                    break;
                 case Role.Scouter:
-                    DoAggressiveStrategyForScouter(); break;
+                    _isScouterLow = false;
+                    DoAggressiveStrategyForScouter();
+                    break;
                 case Role.Assistant:
-                    DoAggressiveStrategyForAssistant(); break;
+                    DoAggressiveStrategyForAssistant();
+                    break;
             }
         }
         else
@@ -100,13 +103,8 @@ public class RuleBasedMind : AbstractPlayerMind
             {
                 case Role.Shooter:
                     _isShooterLow = true; break;
-                case Role.Assistant:
-                    _isScouterLow = true; break;
-                //der Wert von _isAssistantLow wird nicht verwendet somit braucht man auch diesen Case nicht  
-                /*
                 case Role.Scouter:
-                    _isAssistantLow = true; break;
-                */
+                    _isScouterLow = true; break;
             }
             DoDefensiveStrategy();
         }
@@ -117,19 +115,6 @@ public class RuleBasedMind : AbstractPlayerMind
     
     private void DoAggressiveStrategyForShooter()
     {
-        if (!_isScouterDead && !_isScouterLow)
-        {
-            if (!_goForwardShooter)
-            {
-                RandomMove();
-                _shooterPosition = Body.Position;
-                return;
-            }
-            _goForwardShooter = false;
-        }else
-        {
-            RandomMove();
-        }
         if (!GoForShot())
         {
             RandomMove();
@@ -139,19 +124,18 @@ public class RuleBasedMind : AbstractPlayerMind
     private void DoAggressiveStrategyForScouter()
     {
         //es befindet sich noch kein Agent aus dem eigenen Team auf einem hill 
-        if (!_aiOnTheHills)
+        if(!_isScouterOnHill && !_isScouterBeforeOnHill)
         {
-            //Suche nach hills in der Umgebung, speicher die Pos. von den hills in eine Liste
+            _tickAfterOnTheHill = 0;
             var hills = Body.ExploreHills1();
-            //wenn min. 1 hill in Sichtweite dann gehe zu dem hill 
-            if (hills.Count > 0)
+            if (hills != null && hills.Count > 0)
             {
                 //gehe zum nähesten hill 
                 Body.GoTo(hills.OrderBy(x => Body.GetDistance(x)).FirstOrDefault());
                 if (Body.GetDistance(hills.OrderBy(x => Body.GetDistance(x)).FirstOrDefault()) == 0)
                 {
-                    _aiOnTheHills = true;
-                    _tickOnTheHills = 0;
+                    _isScouterOnHill = true;
+                    _tickOnTheHill = 0;
                 }
                 //Scouter ist nun auf einem hill, somit können entsprechende Aktionen ausgeführt werden
                 ActionOnTheHills();
@@ -162,14 +146,24 @@ public class RuleBasedMind : AbstractPlayerMind
             }
         }
         //es befindet sich schon ein Agent auf irgendeinem einem hill
-        else 
+        else if (_tickAfterOnTheHill < 20 && _isScouterBeforeOnHill)
+        {
+            _tickAfterOnTheHill++;
+            RandomMove();
+            GoForShot();
+            if (_tickAfterOnTheHill == 20)
+            {
+                _isScouterBeforeOnHill = false;
+            }
+        }else 
         {
             ActionOnTheHills();
-            _tickOnTheHills++;
-            if (_tickOnTheHills == 7 || Body.WasTaggedLastTick)
+            _tickOnTheHill++;
+            if ((_tickOnTheHill % 5 == 0 )|| Body.WasTaggedLastTick)
             {
                 RandomMove();
-                _aiOnTheHills = false;
+                _isScouterOnHill = false;
+                _isScouterBeforeOnHill = true;
             }
         }
     }
@@ -178,12 +172,6 @@ public class RuleBasedMind : AbstractPlayerMind
     {
         if (!_isScouterDead && !_isShooterDead && !_isScouterLow && !_isShooterLow)
         {
-            if (!_goForwardAssistant)
-            {
-                Body.GoTo(_shooterPosition);
-                return;
-            }
-            _goForwardAssistant = false;
             if (!GoForShot())
             {
                 RandomMove();
@@ -193,12 +181,7 @@ public class RuleBasedMind : AbstractPlayerMind
             DoAggressiveStrategyForScouter();
         } else if (_isShooterDead || _isShooterLow) 
         {
-            RandomMove();
-            
-            if (!GoForShot())
-            {
-                RandomMove();
-            }
+            DoAggressiveStrategyForShooter();
         }
     }
     
@@ -219,110 +202,59 @@ public class RuleBasedMind : AbstractPlayerMind
                     _isScouterDead = true;
                 }
                 break;
-            //der Wert von _isAssistantDead wird nicht verwendet somit braucht man auch diesen Case nicht 
-            /*
-            case Role.Assistant:
-                if (!Body.Alive)
-                {
-                    _isAssistantDead = true;
-                }
-                break;
-            */
         }
         //erforsche das Spielfeld nach Barieren und Gräben
-        var exploreBarriers1 = Body.ExploreBarriers1(); 
+        //var exploreBarriers1 = Body.ExploreBarriers1(); 
         var exploreDitches1 = Body.ExploreDitches1();
         //gibt es mind. 1 Barriere in dem Sichtfeld des Agenten, dann gehe dahin und versuche einen Shot
+        /*
         if (exploreBarriers1 != null && exploreBarriers1.Any())
         {
             Body.GoTo(exploreBarriers1[0]);
-            GoForShot();
         }//gibt es mind. 1 Graben in dem Sichtfeld des Agenten, dann gehe dahin und versuche einen Shot 
-        else if (exploreDitches1 != null && exploreDitches1.Any())
+        else 
+        */
+        
+        if (exploreDitches1 != null && exploreDitches1.Any())
         {
+            //var goal = exploreDitches1.OrderBy(x => Body.GetDistance(x)).FirstOrDefault();
+            /*if (Body.GetDistance(goal) == 0)
+            {
+                if (Body.Stance != Stance.Lying)
+                {
+                    Body.ChangeStance2(Stance.Lying);
+                }
+            }
+            else
+            {
+                if (Body.Stance != Stance.Standing)
+                {
+                    Body.ChangeStance2(Stance.Standing);
+                }
+            }*/
             Body.GoTo(exploreDitches1[0]);
-            GoForShot();
         }
-        else
+
+
+        if (!GoForShot())
         {
             RandomMove();
         }
-        
-    }
 
-    private void TellShooter()
-    {
-        _goForwardShooter = true;
-    }
-    
-    private void TellAssistant()
-    {
-        _goForwardAssistant = true;
+
     }
     
     /**
      *  Diese Methode wird ausgeführt wenn sich ein Agent aus dem eigenen Team auf einem hill befindet.
      *  Die Position auf dem hill wird genutzt um den Agenten der Rollen Assistant und Shooter Informationen über einen
      *  Enemy zu geben. 
+     *  Wenn die Action on hill erfolgreich war dann liefert die Methode true ansonsten false. 
      */
     private void ActionOnTheHills()
     {
+        //suche nach enemies 
         _enemies = Body.ExploreEnemies1();
-        if (_enemies != null && _enemies.Any())
-        {
-            _enemy = _enemies.First();
-            _enemyPosition = _enemy.Position.Copy();
-            TellAssistant();
-            TellShooter();
-            bool successRateForShooting = CheckSuccessRateForShooting(_enemy);
-            if (Body.GetDistance(_enemyPosition) <= 5 && successRateForShooting)
-            {
-                if (Body.Stance != Stance.Lying)
-                {
-                    Body.ChangeStance2(Stance.Lying);
-                }
-                if (Body.RemainingShots == 0)
-                {
-                    Body.Reload3();
-                
-                }
-                Body.Tag5(_enemyPosition);
-                MoveAgentAfterShooting();
-            }
-        }
-    }
-    
-    /**
-     *  Diese Methode bestimmt mit einer sehr einfachen logik die Erfolgsrate für ein shot-attempt. 
-     */
-    private bool CheckSuccessRateForShooting(EnemySnapshot enemy)
-    {
-        //True if the enemy is not lying
-        return enemy.Stance != Stance.Lying;
-    }
-    
-    /**
-     *  Diese Methode dient dazu den Agenten nach einem shot-attempt an
-     *  eine andere Position zu positionieren. 
-     */
-    private void MoveAgentAfterShooting()
-    {
-        var tmpPos = Position.CreatePosition(Body.Position.X + 1, Body.Position.Y);
-        Body.GoTo(tmpPos);
-    }
-
-    /**
-     *  Die Methode dient dazu einen Agenten an eine zufällige Position
-     *  zuführen. 
-     */
-    private void RandomMove()
-    {
-        var x = RandomHelper.Random.Next(48);
-        var y = RandomHelper.Random.Next(48);
-
-        var goal = Position.CreatePosition(x, y);
-        Body.ChangeStance2(Stance.Standing);
-        Body.GoTo(goal);
+        GoForShot();
     }
     
     /**
@@ -331,38 +263,72 @@ public class RuleBasedMind : AbstractPlayerMind
      */
     private bool GoForShot()
     {
+        /*
+        if (_enemies == null)
+        {
+            _enemies = Body.ExploreEnemies1();
+        }
+        */
         _enemies = Body.ExploreEnemies1();
         //gibt es mind. 1 Gegner in der Umgebung des Agents
         if (_enemies != null && _enemies.Any())
         {
             _enemy = _enemies.First();
             _enemyPosition = _enemy.Position.Copy();
-            bool successRateForShooting = CheckSuccessRateForShooting(_enemy);
-            if (Body.GetDistance(_enemyPosition) <= 5 && successRateForShooting)
+            //bool successRateForShooting = CheckSuccessRateForShooting(_enemy);
+            var hasBeeLine = Body.HasBeeline1(_enemyPosition);
+            if (hasBeeLine)
             {
-                if (Body.Stance != Stance.Lying)
+                if (Body.GetDistance(_enemyPosition) <= 5)
                 {
-                    //erhoeht die Wahrscheinlichkeit das der Gegner erfolgreich getagged wird 
-                    Body.ChangeStance2(Stance.Lying);
+                    if (Body.Stance != Stance.Lying)
+                    {
+                        //erhoeht die Wahrscheinlichkeit das der Gegner erfolgreich getagged wird 
+                        Body.ChangeStance2(Stance.Lying);
+                    }
+                }
+                else if (Body.GetDistance(_enemyPosition) <= 8)
+                {
+                    if (Body.Stance != Stance.Kneeling)
+                    {
+                        Body.ChangeStance2(Stance.Kneeling);
+                    }
+                } else if(Body.GetDistance(_enemyPosition) <= 10)
+                {
+                    if (Body.Stance != Stance.Standing)
+                    {
+                        Body.ChangeStance2(Stance.Standing);
+                    }
                 }
                 if (Body.RemainingShots == 0)
                 {
                     Body.Reload3();
+                    Body.ChangeStance2(Stance.Lying);
                 }
-                Body.Tag5(_enemyPosition);
-                MoveAgentAfterShooting();
-                return true; 
-            }else
-            {   
-                //Distanz zu dem Gegner ist zu groß oder die Success-Rate stimmte nicht um zu schießen 
-                return false;
+                else
+                {
+                    Body.Tag5(_enemyPosition);
+                }
+                
+                RandomMove();
+                return true;
             }
-        }else
-        {
-            //es gibt keine Gegner in der Umgebung des Agents, somit wird auch nicht geschossen
-            return false;
         }
+        return false; 
     }
     
+    /**
+     *  Die Methode dient dazu einen Agenten an eine zufällige Position
+     *  zuführen. 
+     */
+    private void RandomMove()
+    {
+        var x = RandomHelper.Random.Next(51);
+        var y = RandomHelper.Random.Next(51);
+
+        var goal = Position.CreatePosition(x, y);
+        Body.ChangeStance2(Stance.Standing);
+        Body.GoTo(goal);
+    }
     #endregion
 }

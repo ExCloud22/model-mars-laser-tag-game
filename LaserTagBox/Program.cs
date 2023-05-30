@@ -23,20 +23,24 @@ internal static class Program
         description.AddAgent<Barrier, PlayerBodyLayer>();
         description.AddAgent<PlayerBody, PlayerBodyLayer>();
         
-        //description.AddAgent<Example1, PlayerMindLayer>();
-        //description.AddAgent<Example2, PlayerMindLayer>();
         description.AddAgent<Example1, PlayerMindLayer>();
+        description.AddAgent<Example2, PlayerMindLayer>();
+        description.AddAgent<Example3, PlayerMindLayer>();
         
-        // USER: Add agents here
-        //description.AddAgent<LearningBasedMind, PlayerMindLayer>();
         description.AddAgent<RuleBasedMind, PlayerMindLayer>();
 
-        description.AddAgent<Example2, PlayerMindLayer>();
+        // USER: Add agents here
+        //description.AddAgent<LearningBasedMind, PlayerMindLayer>();
+        
         
         // USER: Specify JSON configuration file here
-        var file = File.ReadAllText("config_3.json");
+        var file = File.ReadAllText("config_4.json");
+        Console.WriteLine(file);
+        
         var config = SimulationConfig.Deserialize(file);
 
+        Console.WriteLine(config);
+        
         var starter = SimulationStarter.Start(description, config);
         var handle = starter.Run();
         Console.WriteLine("Successfully executed iterations: " + handle.Iterations);
