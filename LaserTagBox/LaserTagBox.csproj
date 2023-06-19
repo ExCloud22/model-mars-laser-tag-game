@@ -19,6 +19,7 @@
 
     <ItemGroup>
         <PackageReference Include="Mars.Life.Simulations" Version="4.5.1" />
+        <PackageReference Include="TorchSharp" Version="0.100.2" />
     </ItemGroup>
 
 </Project>

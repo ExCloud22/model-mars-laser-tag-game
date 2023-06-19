@@ -33,6 +33,7 @@ public class Example3 : AbstractPlayerMind
 
         if (_teamLeader == Guid.Empty)
         {
+            Console.WriteLine("team leader ist da");
             _teamLeader = this.ID;
         }
     }
